@@ -20,12 +20,23 @@ Breaking changes (removing a linter, renaming the job, changing required inputs)
 - Workflow path `.github/workflows/lint.yml`, callable with **zero required inputs**
 - Job name `lint` (consumers' required-status-check rulesets reference it as
   `lint / lint`)
-- Repo-local pins (`package.json` + lockfile) always win over the inline fallback pins
+- Repo-local pins (`package.json` + **npm** lockfile) win over the inline fallback
+  pins. npm only: pnpm/yarn repos silently get the fallback pins instead
+- Consumer configs win over the built-in fallbacks: yamllint / markdownlint fall back
+  to a relaxed 120-column config only when the repo has none
+- A consumer with its own `.secretlintrc.json` must also pin `secretlint` and every
+  referenced rule in its `package.json` — the npx fallback installs only the
+  recommend preset
 - Hook names in `lefthook/common.yml` keep their `common-` prefix (collision-safety
-  with consumer configs)
+  with consumer configs); hooks are never stricter than CI (markdownlint / yamllint
+  hooks stay inactive in repos without a config)
+- All `uses:` are SHA-pinned with a trailing version comment — never re-point them to
+  a mutable tag; checkout keeps `persist-credentials: false`
 
 ## Version pins
 
-The inline fallback pins (prettier, secretlint in both `lint.yml` and
-`lefthook/common.yml`) are not covered by Dependabot — bump them manually when
-consumer repos' package.json pins move ahead.
+This repo's own `package.json` pins are Dependabot-managed and dogfood the
+workflow's npm path. The **inline** fallback pins are not: prettier / secretlint /
+yamllint in `lint.yml` (`env:` block) and prettier / secretlint / markdownlint-cli2
+in `lefthook/common.yml` must be bumped manually — keep them in step when
+Dependabot moves `package.json`.

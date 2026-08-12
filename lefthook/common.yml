@@ -19,19 +19,46 @@ pre-commit:
         {staged_files}
     common-markdownlint:
       glob: "*.md"
-      # markdownlint-cli2 is installed per machine via dotfiles
-      # (Brewfile / nix/packages.nix)
-      run: markdownlint-cli2 {staged_files}
+      # Only active in repos that carry a markdownlint config: without one
+      # the tool's 80-column default is stricter than the CI fallback (120),
+      # and a hook must never be stricter than the CI it fronts.
+      run: >-
+        sh -c 'ls .markdownlint* >/dev/null 2>&1 || exit 0;
+        if [ -x node_modules/.bin/markdownlint-cli2 ];
+        then node_modules/.bin/markdownlint-cli2 "$@";
+        else npx --yes markdownlint-cli2@0.23.2 "$@"; fi' --
+        {staged_files}
+    common-shellcheck:
+      glob: "*.{sh,bash}"
+      # Guarded: machines without shellcheck (brew/nix not applied yet) skip
+      # instead of blocking the commit; CI remains the backstop.
+      run: >-
+        sh -c 'command -v shellcheck >/dev/null 2>&1 || exit 0;
+        shellcheck "$@"' --
+        {staged_files}
+    common-yamllint:
+      glob: "*.{yml,yaml}"
+      # Guarded on the tool and on a repo config, for the same
+      # never-stricter-than-CI reason as markdownlint above.
+      run: >-
+        sh -c 'command -v yamllint >/dev/null 2>&1 || exit 0;
+        { [ -f .yamllint.yml ] || [ -f .yamllint.yaml ] || [ -f .yamllint ]; } || exit 0;
+        yamllint "$@"' --
+        {staged_files}
     common-secretlint:
-      glob: "*.{env*,json,yml,yaml,toml,js,ts,jsx,tsx,rb,py,go,sh,bash,zsh,md}"
-      # secretlint hard-fails without a config, so fall back to the recommend
-      # preset via a temp file when the repo has no .secretlintrc.json
+      # No glob on purpose: secrets live exactly in the files a filter would
+      # skip (*.pem, .npmrc, extensionless keys, chezmoi dot_* sources).
+      # Repo-local bin only together with the repo's own rc — the npx
+      # fallback installs just the recommend preset (same rule as CI).
       run: >-
         sh -c 'rc=.secretlintrc.json;
+        if [ -f "$rc" ] && [ -x node_modules/.bin/secretlint ]; then
+        node_modules/.bin/secretlint --secretlintrc "$rc" "$@";
+        else
         if [ ! -f "$rc" ]; then rc="$(mktemp)";
         printf "%s" "{\"rules\":[{\"id\":\"@secretlint/secretlint-rule-preset-recommend\"}]}" > "$rc"; fi;
         npx --yes --prefer-offline
         --package secretlint@13.0.4
         --package @secretlint/secretlint-rule-preset-recommend@13.0.4
-        -- secretlint --secretlintrc "$rc" "$@"' --
+        -- secretlint --secretlintrc "$rc" "$@"; fi' --
         {staged_files}

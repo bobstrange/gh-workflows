@@ -9,7 +9,10 @@ land everywhere without touching each repo.
 - `.github/workflows/lint.yml` — reusable lint workflow (`workflow_call`): prettier,
   secretlint, shellcheck, yamllint, markdownlint, actionlint as serial steps in one job
   (one billed minute per run), each under `!cancelled()` so one failure never hides the rest
-- `lefthook/common.yml` — the matching pre-commit hooks, consumed via lefthook `remotes:`
+- `lefthook/common.yml` — pre-commit hooks for the same linters, consumed via lefthook
+  `remotes:`. Hooks are best-effort and never stricter than CI: shellcheck / yamllint
+  skip on machines without the tool, markdownlint / yamllint stay inactive in repos
+  without their config; CI is always the backstop
 
 ## Usage
 
@@ -55,10 +58,12 @@ automatically — CI immediately, hooks within `refetch_frequency`.
 
 ## Conventions baked in
 
-- Version pins: a repo-local pin (`package.json` + lockfile) always wins; the inline
-  pins here are fallbacks for repos without one
-- secretlint uses the repo's `.secretlintrc.json` when present, otherwise the
-  recommend preset
+- Version pins: a repo-local pin (`package.json` + **npm** lockfile) wins; the inline
+  pins here are fallbacks for repos without one (pnpm/yarn repos get the fallbacks)
+- Lint configs: the repo's own yamllint / markdownlint / secretlint configs win;
+  without them, relaxed 120-column fallbacks (and the secretlint recommend preset)
+  apply. A custom `.secretlintrc.json` requires pinning secretlint and its rules in
+  `package.json`
 - Repo-specific jobs (tests, language toolchains) stay in each repo's own workflow,
   next to the caller job — see the escape hatches below
 

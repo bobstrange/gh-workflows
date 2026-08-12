@@ -5,3 +5,10 @@ rules:
   line-length:
     max: 120
   truthy: disable
+  # prettier (also part of this lint suite) forces exactly one space before
+  # inline comments; yamllint's default of two would ping-pong with it
+  comments:
+    min-spaces-from-content: 1
+
+ignore: |
+  node_modules/
