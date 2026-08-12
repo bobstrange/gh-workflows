@@ -1,0 +1,20 @@
+---
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # This repo eats its own dog food: if the reusable workflow breaks, this
+  # breaks first, before any consumer repo sees it.
+  lint:
+    uses: ./.github/workflows/lint.yml

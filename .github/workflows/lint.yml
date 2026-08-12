@@ -1,0 +1,89 @@
+---
+name: Reusable lint
+
+on:
+  workflow_call:
+
+jobs:
+  lint:
+    # One job on purpose: GitHub bills per job with a 1-minute round-up, so
+    # serial steps in a single job cost 1 minute where the same linters as
+    # parallel jobs would cost one minute each.
+    name: lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    env:
+      # Fallback pins for repos without a package.json. A repo-local pin
+      # (node_modules/.bin, installed by npm ci below) always wins, so repos
+      # that track versions via Dependabot are never overridden by these.
+      PRETTIER_VERSION: "3.9.6"
+      SECRETLINT_VERSION: "13.0.4"
+    steps:
+      - uses: actions/checkout@v7
+
+      # setup-node's `cache: npm` requires a lockfile, hence the split on
+      # package-lock.json. The .node-version variant keeps local (mise) and
+      # CI on the same major for repos that pin one.
+      - name: Set up node (.node-version)
+        if: hashFiles('package-lock.json') != '' && hashFiles('.node-version') != ''
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Set up node (runner default)
+        if: hashFiles('package-lock.json') != '' && hashFiles('.node-version') == ''
+        uses: actions/setup-node@v7
+        with:
+          cache: npm
+      - name: npm ci
+        if: hashFiles('package-lock.json') != ''
+        run: npm ci
+
+      # Every lint step runs under !cancelled() so the first failure does
+      # not hide findings from the rest — most importantly secretlint's.
+      - name: prettier
+        if: ${{ !cancelled() }}
+        run: |
+          if [ -x node_modules/.bin/prettier ]; then
+            bin="node_modules/.bin/prettier"
+          else
+            bin="npx --yes prettier@$PRETTIER_VERSION"
+          fi
+          $bin --check --no-error-on-unmatched-pattern "**/*.{md,json,yaml,yml}"
+
+      - name: secretlint
+        if: ${{ !cancelled() }}
+        run: |
+          config=".secretlintrc.json"
+          if [ ! -f "$config" ]; then
+            config="$RUNNER_TEMP/secretlintrc.json"
+            echo '{"rules":[{"id":"@secretlint/secretlint-rule-preset-recommend"}]}' > "$config"
+          fi
+          if [ -x node_modules/.bin/secretlint ]; then
+            node_modules/.bin/secretlint --secretlintrc "$config" "**/*"
+          else
+            npx --yes \
+              --package "secretlint@$SECRETLINT_VERSION" \
+              --package "@secretlint/secretlint-rule-preset-recommend@$SECRETLINT_VERSION" \
+              -- secretlint --secretlintrc "$config" "**/*"
+          fi
+
+      - name: shellcheck
+        if: ${{ !cancelled() }}
+        uses: ludeeus/action-shellcheck@2.0.0
+
+      - name: yamllint
+        if: ${{ !cancelled() }}
+        uses: ibiqlik/action-yamllint@v3
+
+      - name: markdownlint
+        if: ${{ !cancelled() }}
+        uses: DavidAnson/markdownlint-cli2-action@v24
+        with:
+          globs: "**/*.md"
+
+      - name: actionlint
+        if: ${{ !cancelled() }}
+        uses: raven-actions/actionlint@v2

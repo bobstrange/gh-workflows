@@ -1,0 +1,37 @@
+# Shared pre-commit hooks, consumed from other repos via lefthook `remotes:`.
+# Command names carry a `common-` prefix so they never collide with repo-local
+# commands — on a name collision the remote config overrides lefthook.yml
+# (merge order: lefthook.yml -> remotes -> lefthook-local.yml).
+---
+pre-commit:
+  parallel: true
+  commands:
+    common-trailing-whitespace:
+      run: git diff --cached --check
+    common-prettier:
+      glob: "*.{md,json,yaml,yml}"
+      # A repo-local pin (package.json + npm ci) wins; the inline pin is the
+      # fallback for repos without one — same rule as the CI workflow.
+      run: >-
+        sh -c 'if [ -x node_modules/.bin/prettier ];
+        then node_modules/.bin/prettier --check "$@";
+        else npx --yes prettier@3.9.6 --check "$@"; fi' --
+        {staged_files}
+    common-markdownlint:
+      glob: "*.md"
+      # markdownlint-cli2 is installed per machine via dotfiles
+      # (Brewfile / nix/packages.nix)
+      run: markdownlint-cli2 {staged_files}
+    common-secretlint:
+      glob: "*.{env*,json,yml,yaml,toml,js,ts,jsx,tsx,rb,py,go,sh,bash,zsh,md}"
+      # secretlint hard-fails without a config, so fall back to the recommend
+      # preset via a temp file when the repo has no .secretlintrc.json
+      run: >-
+        sh -c 'rc=.secretlintrc.json;
+        if [ ! -f "$rc" ]; then rc="$(mktemp)";
+        printf "%s" "{\"rules\":[{\"id\":\"@secretlint/secretlint-rule-preset-recommend\"}]}" > "$rc"; fi;
+        npx --yes --prefer-offline
+        --package secretlint@13.0.4
+        --package @secretlint/secretlint-rule-preset-recommend@13.0.4
+        -- secretlint --secretlintrc "$rc" "$@"' --
+        {staged_files}

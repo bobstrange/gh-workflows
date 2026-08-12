@@ -1,0 +1,17 @@
+---
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "chore(ci)"
+    # Consumers pick updates up via the moving v1 tag, so wait out the
+    # window in which a compromised action release is typically discovered
+    # and yanked before proposing it.
+    cooldown:
+      default-days: 7
+    groups:
+      actions-minor:
+        update-types: [minor, patch]
