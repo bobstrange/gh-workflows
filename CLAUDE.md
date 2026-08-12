@@ -7,9 +7,9 @@ so treat every edit as a cross-repo change.
 ## Release convention (required after every merged change)
 
 1. Merge to `main` (CI must be green — this repo consumes its own lint workflow)
-2. Create and push the next semver tag: `git tag v1.x.y && git push origin v1.x.y`
-3. The `Move major tag` workflow then force-moves `v1` to that commit automatically —
-   never move `v1` by hand
+2. Run `make release` (defaults to a patch bump; `make release BUMP=minor` for new
+   features, `BUMP=major` for breaking changes). The script tags `v1.x.y`, force-moves
+   the major tag to it, and pushes both — never move `v1` by hand
 
 A merged change that is not tagged reaches nobody: consumers only follow `v1`.
 Breaking changes (removing a linter, renaming the job, changing required inputs) go to
