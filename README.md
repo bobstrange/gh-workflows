@@ -39,6 +39,14 @@ jobs:
     uses: bobstrange/gh-workflows/.github/workflows/lint.yml@v1
 ```
 
+### Inputs
+
+All optional — the zero-input call above stays valid.
+
+| Input                     | Default | Effect                                                                                                                                     |
+| ------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `shellcheck_ignore_paths` | `""`    | Space-separated paths shellcheck skips, on top of `node_modules`. For shell-adjacent files it cannot parse (zsh config, templated scripts) |
+
 Hooks — `lefthook.yml` in the consumer repo (then `lefthook install`):
 
 ```yaml

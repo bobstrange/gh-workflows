@@ -17,7 +17,9 @@ Breaking changes (removing a linter, renaming the job, changing required inputs)
 
 ## Consumer contract (do not break within v1)
 
-- Workflow path `.github/workflows/lint.yml`, callable with **zero required inputs**
+- Workflow path `.github/workflows/lint.yml`, callable with **zero required inputs**. New
+  inputs stay optional and default to the current behavior, so the zero-input call never
+  changes meaning
 - Job name `lint` (consumers' required-status-check rulesets reference it as
   `lint / lint`)
 - Repo-local pins (`package.json` + **npm** lockfile) win over the inline fallback
