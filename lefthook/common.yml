@@ -7,6 +7,9 @@ pre-commit:
   parallel: true
   commands:
     common-trailing-whitespace:
+      # Deliberate exception to "never stricter than CI" (CLAUDE.md): this
+      # blocks whitespace errors and conflict markers in every file type,
+      # while CI only catches them in prettier-covered files.
       run: git diff --cached --check
     common-prettier:
       glob: "*.{md,json,yaml,yml}"
