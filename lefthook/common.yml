@@ -21,9 +21,12 @@ pre-commit:
       glob: "*.md"
       # Only active in repos that carry a markdownlint config: without one
       # the tool's 80-column default is stricter than the CI fallback (120),
-      # and a hook must never be stricter than the CI it fronts.
+      # and a hook must never be stricter than the CI it fronts. Two globs
+      # matched separately, same as CI: .markdownlintignore alone is not
+      # a config.
       run: >-
-        sh -c 'ls .markdownlint* >/dev/null 2>&1 || exit 0;
+        sh -c '{ ls .markdownlint.* >/dev/null 2>&1 ||
+        ls .markdownlint-cli2.* >/dev/null 2>&1; } || exit 0;
         if [ -x node_modules/.bin/markdownlint-cli2 ];
         then node_modules/.bin/markdownlint-cli2 "$@";
         else npx --yes markdownlint-cli2@0.23.2 "$@"; fi' --
