@@ -47,7 +47,12 @@ if [ "$conclusion" != "success" ]; then
   exit 1
 fi
 
-latest="$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -1)"
+# The latest release comes from origin, not the local tag store: a stray
+# local tag (never pushed, or left over from an aborted release) must not
+# skew the next version — consumers only ever see origin's tags.
+latest="$(git ls-remote --refs --sort='-v:refname' \
+  origin 'refs/tags/v[0-9]*.[0-9]*.[0-9]*' |
+  head -1 | sed 's|.*refs/tags/||')"
 if [ -z "$latest" ]; then
   next="v1.0.0"
 else
