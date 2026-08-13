@@ -64,4 +64,9 @@ git tag "$next"
 git tag -f "$major_tag" "$next"
 # --atomic: never leave v1.x.y published with the major tag still behind.
 git push --atomic origin "refs/tags/$next" "+refs/tags/$major_tag"
+
+# A GitHub release with generated notes gives consumers a changelog for what
+# the moving major tag just picked up, without digging through git log.
+gh release create "$next" --verify-tag --title "$next" --generate-notes
+
 echo "released $next ($major_tag now points at it)"
