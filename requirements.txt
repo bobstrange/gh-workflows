@@ -1,0 +1,5 @@
+# Dependabot watch-target for the Python side of the lint workflow. lint.yml
+# cannot read this file at run time (a reusable workflow executes in the
+# consumer's checkout), so the version is mirrored in its env: block — the
+# pins CI job fails whenever the two drift.
+yamllint==1.38.0

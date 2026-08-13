@@ -18,7 +18,7 @@ check() { # <file> <label> <actual> <expected>
     echo "$1: no pin found for $2 (extraction pattern broken?)" >&2
     fail=1
   elif [ "$3" != "$4" ]; then
-    echo "$1: $2 pinned at $3, package.json has $4" >&2
+    echo "$1: $2 pinned at $3, the Dependabot-managed pin is $4" >&2
     fail=1
   fi
 }
@@ -31,6 +31,12 @@ check .github/workflows/lint.yml PRETTIER_VERSION \
   "$(lint_env PRETTIER_VERSION)" "$(want prettier)"
 check .github/workflows/lint.yml SECRETLINT_VERSION \
   "$(lint_env SECRETLINT_VERSION)" "$(want secretlint)"
+
+# yamllint is Python: Dependabot watches requirements.txt, the workflow
+# mirrors it in env: (it cannot read this repo's files at run time).
+check .github/workflows/lint.yml YAMLLINT_VERSION \
+  "$(lint_env YAMLLINT_VERSION)" \
+  "$(sed -n 's/^yamllint==\(.*\)$/\1/p' requirements.txt)"
 
 # Every inline <package>@<version> occurrence in the hooks config. The
 # secretlint pattern cannot match inside the preset name: there "@<digit>"
@@ -49,6 +55,6 @@ for pkg in prettier secretlint markdownlint-cli2 \
 done
 
 if [ "$fail" -eq 0 ]; then
-  echo "all inline pins match package.json"
+  echo "all inline pins match their Dependabot-managed sources"
 fi
 exit "$fail"
