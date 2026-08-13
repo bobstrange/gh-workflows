@@ -3,6 +3,16 @@ name: Reusable lint
 
 on:
   workflow_call:
+    inputs:
+      shellcheck_ignore_paths:
+        description: >-
+          Extra space-separated paths for shellcheck to skip, added to the
+          always-excluded node_modules. For directories holding shell-adjacent
+          files shellcheck cannot parse (zsh config, templated scripts) that a
+          repo-local job checks properly instead.
+        type: string
+        required: false
+        default: ""
 
 jobs:
   lint:
@@ -42,7 +52,9 @@ jobs:
         if: ${{ !cancelled() }}
         uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38 # 2.0.0
         with:
-          ignore_paths: node_modules
+          # The action splits this on whitespace, so appending is enough —
+          # node_modules stays excluded whatever the consumer passes.
+          ignore_paths: node_modules ${{ inputs.shellcheck_ignore_paths }}
 
       - name: yamllint
         if: ${{ !cancelled() }}
