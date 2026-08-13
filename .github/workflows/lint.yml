@@ -92,7 +92,12 @@ jobs:
         # markdownlint-cli2) wins, relaxed fallback otherwise.
         run: |
           config=""
-          if ! ls .markdownlint* >/dev/null 2>&1; then
+          # Two globs, matched separately: `ls a* b*` fails when either one
+          # is empty. `.markdownlint*` would also match .markdownlintignore,
+          # wrongly suppressing the fallback in repos that carry only the
+          # ignore file.
+          if ! ls .markdownlint.* >/dev/null 2>&1 &&
+            ! ls .markdownlint-cli2.* >/dev/null 2>&1; then
             config="$RUNNER_TEMP/markdownlint.yml"
             {
               echo "line-length:"

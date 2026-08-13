@@ -77,6 +77,13 @@ run_step "Choose markdownlint config"
 [ -z "$(sed -n 's/^path=//p' "$GITHUB_OUTPUT" | tail -1)" ]
 rm .markdownlint.yml
 
+echo "== markdownlint: an ignore file alone does not count as a config"
+touch .markdownlintignore
+: > "$GITHUB_OUTPUT"
+run_step "Choose markdownlint config"
+[ -n "$(sed -n 's/^path=//p' "$GITHUB_OUTPUT" | tail -1)" ]
+rm .markdownlintignore
+
 echo "== prettier: npx fallback passes a clean fixture"
 run_step prettier
 
