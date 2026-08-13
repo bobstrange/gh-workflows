@@ -1,0 +1,6 @@
+# Dogfood: consume the shared hooks from the working tree instead of
+# `remotes:`, so an edit to lefthook/common.yml is exercised by the very
+# next commit here — before any consumer refetches it.
+---
+extends:
+  - lefthook/common.yml

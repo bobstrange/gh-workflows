@@ -4,6 +4,10 @@ Shared CI (reusable workflow) and git hooks (lefthook remote config) consumed by
 other repositories via the moving `v1` tag. Changes here propagate to every consumer,
 so treat every edit as a cross-repo change.
 
+After cloning, run `lefthook install`: this repo dogfoods `lefthook/common.yml`
+through a local `extends:` in `lefthook.yml`, so every commit here exercises the
+shared hooks before any consumer refetches them.
+
 ## Release convention (required after every merged change)
 
 1. Merge to `main` (CI must be green — this repo consumes its own lint workflow)
