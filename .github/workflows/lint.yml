@@ -13,6 +13,14 @@ on:
         type: string
         required: false
         default: ""
+      markdownlint_enabled:
+        description: >-
+          Set to false to skip markdownlint entirely. For repos whose markdown
+          is machine-written (agent memory dumps) and structurally violates
+          style rules — the same repos typically ignore *.md in .prettierignore.
+        type: boolean
+        required: false
+        default: true
 
 jobs:
   lint:
@@ -86,7 +94,7 @@ jobs:
           yamllint -c "$config" .
 
       - name: Choose markdownlint config
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && inputs.markdownlint_enabled }}
         id: mdconfig
         # Same contract as yamllint: consumer config (auto-discovered by
         # markdownlint-cli2) wins, relaxed fallback otherwise.
@@ -108,7 +116,7 @@ jobs:
           fi
           echo "path=$config" >> "$GITHUB_OUTPUT"
       - name: markdownlint
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && inputs.markdownlint_enabled }}
         uses: DavidAnson/markdownlint-cli2-action@21c1be1b93ad9ed58fa840aacc3f279cde2a72ff # v24
         with:
           config: ${{ steps.mdconfig.outputs.path }}

@@ -43,9 +43,10 @@ jobs:
 
 All optional — the zero-input call above stays valid.
 
-| Input                     | Default | Effect                                                                                                                                     |
-| ------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `shellcheck_ignore_paths` | `""`    | Space-separated paths shellcheck skips, on top of `node_modules`. For shell-adjacent files it cannot parse (zsh config, templated scripts) |
+| Input                     | Default | Effect                                                                                                                                                                                        |
+| ------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `shellcheck_ignore_paths` | `""`    | Space-separated paths shellcheck skips, on top of `node_modules`. For shell-adjacent files it cannot parse (zsh config, templated scripts)                                                    |
+| `markdownlint_enabled`    | `true`  | Set to `false` to skip markdownlint entirely. For repos whose markdown is machine-written and structurally violates style rules — the same repos typically ignore `*.md` in `.prettierignore` |
 
 Hooks — `lefthook.yml` in the consumer repo (then `lefthook install`):
 
