@@ -59,6 +59,41 @@ remotes:
       - lefthook/common.yml
 ```
 
+### Dependency updates
+
+This repo's own Dependabot keeps the linter pins and the actions used _inside_
+`lint.yml` current, and consumers receive those through the moving `v1` tag without
+doing anything. It does **not** reach the actions a consumer pins in its own
+workflows (tests, language toolchains, scheduled jobs): Dependabot reads only
+`.github/dependabot.yml` at each repo's root, and that file has no include or
+inheritance mechanism, so it cannot be centralised here.
+
+Consumer repos that pin actions of their own should add one, keeping the conventions
+this repo uses:
+
+```yaml
+---
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "chore(ci)"
+    # Wait out the window in which a compromised action release is typically
+    # discovered and yanked before proposing it.
+    cooldown:
+      default-days: 7
+    groups:
+      actions-minor:
+        update-types: [minor, patch]
+```
+
+Add further `package-ecosystem` entries for whatever else the repo manages. Keep the
+7-day `cooldown` and the minor/patch grouping so that bumps arrive as one reviewable
+PR per week rather than a stream of individual ones.
+
 ## Versioning
 
 `v1` is a moving major tag (like action tags): backward-compatible changes move it
