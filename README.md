@@ -18,7 +18,8 @@ is a real file everywhere and this README carries the convention for it.
 
 ## Usage
 
-Three pieces go into a consumer repo: two stubs pointing here, and one real file.
+Three files go into a consumer repo — two stubs pointing here and one real file —
+plus a branch ruleset that makes the CI actually block anything.
 
 ### CI
 
@@ -97,6 +98,41 @@ Every other ecosystem is **optional and per-repo** — add `uv`, `npm`, `pip` an
 like only where that repo actually manages such dependencies. Whatever is added keeps
 the same weekly schedule, 7-day `cooldown` and minor/patch grouping, with a
 `chore(deps)` prefix.
+
+### Required status check
+
+Without this the shared workflow runs and reports, but a red run merges anyway. Protect
+the default branch with a ruleset requiring the check by the name **`lint / lint`** —
+the consumer's caller job, then this repo's job inside it. Any other spelling silently
+never matches: the check stays `expected` and the PR waits on it forever.
+
+```sh
+gh api repos/OWNER/REPO/rulesets --method POST --input - <<'JSON'
+{
+  "name": "protect-main",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": { "ref_name": { "include": ["~DEFAULT_BRANCH"], "exclude": [] } },
+  "rules": [
+    { "type": "deletion" },
+    { "type": "non_fast_forward" },
+    { "type": "pull_request", "parameters": {
+        "required_approving_review_count": 0,
+        "allowed_merge_methods": ["merge", "squash", "rebase"]
+    } },
+    { "type": "required_status_checks", "parameters": {
+        "strict_required_status_checks_policy": false,
+        "required_status_checks": [{ "context": "lint / lint", "integration_id": 15368 }]
+    } }
+  ]
+}
+JSON
+```
+
+Repos with jobs of their own add each one's name to `required_status_checks` alongside
+`lint / lint`. Rulesets are the standard here — the older branch-protection API can
+express the same thing, but keeping one mechanism means one place to look when a merge
+is unexpectedly allowed or blocked.
 
 ## Versioning
 
