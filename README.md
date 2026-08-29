@@ -1,8 +1,10 @@
 # gh-workflows
 
-Shared CI and git-hook layer for bobstrange's repositories. The contents live here;
-consumer repos hold only a few-line stub pointing at the moving `v1` tag, so improvements
-land everywhere without touching each repo.
+Shared CI and git-hook layer for bobstrange's repositories. Nearly all of it lives here
+and consumer repos hold only a few-line stub pointing at the moving `v1` tag, so
+improvements land everywhere without touching each repo. The exception is
+`.github/dependabot.yml`: Dependabot reads it only from a repo's own root, so that one
+is a real file everywhere and this README carries the convention for it.
 
 ## What's inside
 
@@ -16,7 +18,11 @@ land everywhere without touching each repo.
 
 ## Usage
 
-CI — `.github/workflows/lint.yml` in the consumer repo:
+Three pieces go into a consumer repo: two stubs pointing here, and one real file.
+
+### CI
+
+`.github/workflows/lint.yml`:
 
 ```yaml
 ---
@@ -39,7 +45,7 @@ jobs:
     uses: bobstrange/gh-workflows/.github/workflows/lint.yml@v1
 ```
 
-### Inputs
+#### Inputs
 
 All optional — the zero-input call above stays valid.
 
@@ -48,7 +54,9 @@ All optional — the zero-input call above stays valid.
 | `shellcheck_ignore_paths` | `""`    | Space-separated paths shellcheck skips, on top of `node_modules`. For shell-adjacent files it cannot parse (zsh config, templated scripts)                                                    |
 | `markdownlint_enabled`    | `true`  | Set to `false` to skip markdownlint entirely. For repos whose markdown is machine-written and structurally violates style rules — the same repos typically ignore `*.md` in `.prettierignore` |
 
-Hooks — `lefthook.yml` in the consumer repo (then `lefthook install`):
+### Hooks
+
+`lefthook.yml` (then `lefthook install`):
 
 ```yaml
 remotes:
@@ -61,9 +69,9 @@ remotes:
 
 ### Dependency updates
 
-Each consumer repo carries its own `.github/dependabot.yml`. It is the one part of the
-standard setup that is a real file everywhere rather than a stub pointing here —
-Dependabot resolves no references — so the convention lives in this README instead:
+`.github/dependabot.yml`. The `github-actions` entry below is **required in every
+consumer**: `v1` keeps the linter pins and the actions inside `lint.yml` current, but
+nothing covers the actions a repo pins in its own workflows.
 
 ```yaml
 ---
@@ -85,9 +93,10 @@ updates:
         update-types: [minor, patch]
 ```
 
-Add further `package-ecosystem` entries for whatever else the repo manages. `v1`
-already covers the linter pins and the actions inside `lint.yml`; the consumer's own
-Dependabot covers the actions it pins in its other workflows.
+Every other ecosystem is **optional and per-repo** — add `uv`, `npm`, `pip` and the
+like only where that repo actually manages such dependencies. Whatever is added keeps
+the same weekly schedule, 7-day `cooldown` and minor/patch grouping, with a
+`chore(deps)` prefix.
 
 ## Versioning
 
