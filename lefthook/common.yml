@@ -1,20 +1,14 @@
 # Shared pre-commit hooks, consumed from other repos via lefthook `remotes:`.
-# Command names carry a `common-` prefix so they never collide with repo-local
-# commands — on a name collision the remote config overrides lefthook.yml
-# (merge order: lefthook.yml -> remotes -> lefthook-local.yml).
+# The `common-` prefix avoids collisions: a remote config wins on a name clash.
 ---
 pre-commit:
   parallel: true
   commands:
     common-trailing-whitespace:
-      # Deliberate exception to "never stricter than CI" (CLAUDE.md): this
-      # blocks whitespace errors and conflict markers in every file type,
-      # while CI only catches them in prettier-covered files.
+      # Deliberate exception to never-stricter-than-CI (CLAUDE.md).
       run: git diff --cached --check
     common-prettier:
       glob: "*.{md,json,yaml,yml}"
-      # A repo-local pin (package.json + npm ci) wins; the inline pin is the
-      # fallback for repos without one — same rule as the CI workflow.
       run: >-
         sh -c 'if [ -x node_modules/.bin/prettier ];
         then node_modules/.bin/prettier --check "$@";
@@ -22,11 +16,8 @@ pre-commit:
         {staged_files}
     common-markdownlint:
       glob: "*.md"
-      # Only active in repos that carry a markdownlint config: without one
-      # the tool's 80-column default is stricter than the CI fallback (120),
-      # and a hook must never be stricter than the CI it fronts. Two globs
-      # matched separately, same as CI: .markdownlintignore alone is not
-      # a config.
+      # Inactive without a repo config: the tool defaults to 80 columns, CI
+      # falls back to 120. .markdownlintignore alone is not a config.
       run: >-
         sh -c '{ ls .markdownlint.* >/dev/null 2>&1 ||
         ls .markdownlint-cli2.* >/dev/null 2>&1; } || exit 0;
@@ -35,13 +26,8 @@ pre-commit:
         else npx --yes markdownlint-cli2@0.23.2 "$@"; fi' --
         {staged_files}
     common-shellcheck:
-      # No glob: an executable without an extension is still a shell script,
-      # and CI's action-shellcheck finds those by shebang. Deliberately a
-      # subset of what CI scans -- CI also takes *.zsh, *.ksh, .bashrc and
-      # friends, which consumers exclude by path via shellcheck_ignore_paths;
-      # a hook has no such input, and must never be stricter than CI.
-      # Guarded: machines without shellcheck (brew/nix not applied yet) skip
-      # instead of blocking the commit; CI remains the backstop.
+      # Do not widen to CI's other names (*.zsh, .bashrc): consumers drop
+      # those by path via shellcheck_ignore_paths, an input no hook has.
       run: >-
         sh -c 'command -v shellcheck >/dev/null 2>&1 || exit 0;
         n=$#;
@@ -57,18 +43,15 @@ pre-commit:
         {staged_files}
     common-yamllint:
       glob: "*.{yml,yaml}"
-      # Guarded on the tool and on a repo config, for the same
-      # never-stricter-than-CI reason as markdownlint above.
       run: >-
         sh -c 'command -v yamllint >/dev/null 2>&1 || exit 0;
         { [ -f .yamllint.yml ] || [ -f .yamllint.yaml ] || [ -f .yamllint ]; } || exit 0;
         yamllint "$@"' --
         {staged_files}
     common-secretlint:
-      # No glob on purpose: secrets live exactly in the files a filter would
-      # skip (*.pem, .npmrc, extensionless keys, chezmoi dot_* sources).
-      # Repo-local bin only together with the repo's own rc — the npx
-      # fallback installs just the recommend preset (same rule as CI).
+      # No glob: secrets live in the files a filter would skip (*.pem,
+      # .npmrc, extensionless keys). The npx fallback has only the recommend
+      # preset, hence repo-local bin only alongside the repo's own rc.
       run: >-
         sh -c 'rc=.secretlintrc.json;
         if [ -f "$rc" ] && [ -x node_modules/.bin/secretlint ]; then

@@ -1,18 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# common-shellcheck picks its own files rather than leaning on a lefthook glob,
-# because an extensionless executable is still a shell script. This pins that
-# selector against a fixture of the awkward cases, on two properties:
-#
-#   1. it selects what it should, and nothing else
-#   2. it stays a subset of what CI's action-shellcheck scans. A hook that is
-#      stricter than CI blocks commits CI would pass (CLAUDE.md), and here the
-#      trap is real: CI skips extensionless files that are not executable, and
-#      excludes whole paths the hook cannot see via shellcheck_ignore_paths.
-#
-# The run block is pulled from lefthook/common.yml with yq at test time, so the
-# code under test is the code that ships.
+# Gates common-shellcheck's file selection, a shell one-liner embedded in YAML
+# that drifts silently. The run block is pulled out with yq at test time, so
+# the code under test is the code that ships.
 
 repo="$(git rev-parse --show-toplevel)"
 hooks="$repo/lefthook/common.yml"

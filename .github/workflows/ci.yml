@@ -46,8 +46,6 @@ jobs:
           persist-credentials: false
       - run: scripts/test-fallbacks.sh
 
-  # common-shellcheck picks its own files instead of using a lefthook glob,
-  # so that selection needs a gate of its own.
   shellcheck-selection:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
