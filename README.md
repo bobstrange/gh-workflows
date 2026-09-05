@@ -14,7 +14,9 @@ is a real file everywhere and this README carries the convention for it.
 - `lefthook/common.yml` — pre-commit hooks for the same linters, consumed via lefthook
   `remotes:`. Hooks are best-effort and never stricter than CI: shellcheck / yamllint
   skip on machines without the tool, markdownlint / yamllint stay inactive in repos
-  without their config; CI is always the backstop
+  without their config; CI is always the backstop. shellcheck takes `*.sh` / `*.bash`
+  plus extensionless executables whose shebang names a shell, mirroring how CI finds
+  scripts — a deliberate subset, since a hook cannot honour `shellcheck_ignore_paths`
 
 ## Usage
 
