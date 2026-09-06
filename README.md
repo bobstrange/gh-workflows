@@ -59,7 +59,7 @@ All optional — the zero-input call above stays valid.
 
 ### Hooks
 
-`lefthook.yml` (then `lefthook install`):
+`lefthook.yml`:
 
 ```yaml
 remotes:
@@ -69,6 +69,19 @@ remotes:
     configs:
       - lefthook/common.yml
 ```
+
+Then `lefthook install` — **once per clone, not once per repo**. `.git/hooks` is not
+tracked, so a second clone, a fresh machine or an agent working in a new checkout has
+no hooks at all: every commit skips the linters and nothing says so. The first sign is
+a red `lint / lint` on a PR whose author believed the hooks had already passed. Check a
+given checkout with:
+
+```sh
+ls .git/hooks/pre-commit
+```
+
+The hooks stay a convenience either way — CI is the backstop, and a checkout without
+them is wrong only in that it wastes a CI round-trip.
 
 ### Dependency updates
 
