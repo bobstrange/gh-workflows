@@ -59,3 +59,10 @@ yamllint in `lint.yml` (`env:` block) and prettier / secretlint / markdownlint-c
 in `lefthook/common.yml` are mirrors. When Dependabot moves `package.json` or
 `requirements.txt`, run `make sync-pins` on the bump branch to rewrite the mirrors
 from the managed sources — the `pins` CI job stays red until they match.
+
+The `common-shellcheck` hook's file selection must stay a subset of what CI's
+action-shellcheck discovers; `scripts/test-shellcheck-selection.sh` gates that in CI
+(`shellcheck-selection` job). The script hardcodes the action's SHA as `action_sha`, so
+when Dependabot bumps `ludeeus/action-shellcheck` the job goes red on the bump branch:
+re-read the new revision's `action.yaml` file discovery, adjust the hook if it changed,
+and update `action_sha` to the new pin.
