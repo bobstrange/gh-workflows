@@ -7,6 +7,17 @@ pre-commit:
     common-trailing-whitespace:
       # Deliberate exception to never-stricter-than-CI (CLAUDE.md).
       run: git diff --cached --check
+    common-claude-md-size:
+      glob: "CLAUDE.md"
+      # Root file only (the path test); same count and limit as CI's
+      # "CLAUDE.md size" step, kept in sync by hand.
+      run: >-
+        sh -c 'for f do [ "$f" = CLAUDE.md ] || continue;
+        w=$(sed "s/|//g" "$f" | grep -v "^[[:space:]:-]*$" | wc -w);
+        [ "$w" -le 500 ] && continue;
+        echo "CLAUDE.md: $w words, limit 500; move detail to .claude/rules/"; exit 1;
+        done' --
+        {staged_files}
     common-prettier:
       glob: "*.{md,json,yaml,yml}"
       run: >-
