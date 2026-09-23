@@ -40,6 +40,10 @@ jobs:
       PRETTIER_VERSION: "3.9.6"
       SECRETLINT_VERSION: "13.0.4"
       YAMLLINT_VERSION: "1.38.0"
+      # Root CLAUDE.md loads every session; past this it stops being followed
+      # reliably. Overflow belongs in .claude/rules/ (path-scoped). Mirrored
+      # in lefthook/common.yml.
+      CLAUDE_MD_MAX_WORDS: "500"
     steps:
       # Actions are pinned to commit SHAs: this layer fans out to every
       # consumer repo, and a moving tag can be re-pointed instantly by a
@@ -51,6 +55,17 @@ jobs:
           # npm/npx below execute registry code; don't leave a token in
           # .git/config for it to read
           persist-credentials: false
+
+      - name: CLAUDE.md size
+        if: ${{ !cancelled() && hashFiles('CLAUDE.md') != '' }}
+        # Table syntax is stripped first so a table costs no more than prose.
+        run: |
+          words=$(sed 's/|//g' CLAUDE.md | grep -v '^[[:space:]:-]*$' | wc -w)
+          echo "CLAUDE.md: $words words (limit $CLAUDE_MD_MAX_WORDS)"
+          if [ "$words" -gt "$CLAUDE_MD_MAX_WORDS" ]; then
+            echo "::error file=CLAUDE.md::$words words, limit $CLAUDE_MD_MAX_WORDS; move detail to .claude/rules/"
+            exit 1
+          fi
 
       # yamllint, markdownlint and shellcheck cannot fully exclude
       # node_modules on their own, so they run before npm ci creates it;

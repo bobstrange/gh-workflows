@@ -10,7 +10,9 @@ is a real file everywhere and this README carries the convention for it.
 
 - `.github/workflows/lint.yml` — reusable lint workflow (`workflow_call`): prettier,
   secretlint, shellcheck, yamllint, markdownlint, actionlint as serial steps in one job
-  (one billed minute per run), each under `!cancelled()` so one failure never hides the rest
+  (one billed minute per run), each under `!cancelled()` so one failure never hides the rest.
+  Also fails a root `CLAUDE.md` over 500 words (table syntax excluded): it loads every
+  session, so overflow belongs in `.claude/rules/`
 - `lefthook/common.yml` — pre-commit hooks for the same linters, consumed via lefthook
   `remotes:`. Hooks are best-effort and never stricter than CI: shellcheck / yamllint
   skip on machines without the tool, markdownlint / yamllint stay inactive in repos
