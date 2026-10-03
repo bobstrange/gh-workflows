@@ -40,10 +40,34 @@ if ! command -v gh >/dev/null 2>&1; then
   exit 1
 fi
 sha="$(git rev-parse HEAD)"
-conclusion="$(gh run list --commit "$sha" --workflow CI \
-  --json conclusion --jq '.[0].conclusion // "missing"')"
-if [ "$conclusion" != "success" ]; then
-  echo "CI for $sha is not green (status: $conclusion); refusing to release" >&2
+# Prints "<run id> <status> <conclusion>" for the newest CI run of HEAD;
+# nothing if there is none.
+ci_run() {
+  gh run list --commit "$sha" --workflow CI --json databaseId,status,conclusion \
+    --jq '.[0] // empty | "\(.databaseId) \(.status) \(.conclusion)"'
+}
+read -r run_id status state <<<"$(ci_run)"
+# A Dependabot auto-merge lands with GITHUB_TOKEN, which triggers no push
+# run, so main can be ahead of its last CI result; dispatch one for it.
+if [ -z "$run_id" ]; then
+  echo "no CI run for $sha; dispatching one" >&2
+  gh workflow run CI --ref main
+  for _ in $(seq 1 12); do
+    sleep 5
+    read -r run_id status state <<<"$(ci_run)"
+    [ -n "$run_id" ] && break
+  done
+  if [ -z "$run_id" ]; then
+    echo "dispatched CI run has not appeared yet; retry in a minute" >&2
+    exit 1
+  fi
+fi
+if [ "$status" != "completed" ]; then
+  gh run watch "$run_id"
+  read -r run_id status state <<<"$(ci_run)"
+fi
+if [ "$state" != "success" ]; then
+  echo "CI for $sha is not green (status: $state); refusing to release" >&2
   exit 1
 fi
 

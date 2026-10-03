@@ -5,6 +5,9 @@ on:
   push:
     branches: [main]
   pull_request:
+  # A Dependabot auto-merge lands with GITHUB_TOKEN, which triggers no push
+  # run; scripts/release.sh dispatches one so it still has a result to gate on.
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

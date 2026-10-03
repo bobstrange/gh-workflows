@@ -180,7 +180,8 @@ updates included (cooldown does not delay those); majors stay manual. It also ne
 - **Nothing that must run on `push` to main.** A merge made with `GITHUB_TOKEN`
   triggers no further workflow, so post-merge E2E or deploys are skipped. Such a repo
   stays manual
-- Here, a merged pin bump still needs `make release` to reach consumers
+- Here, a merged pin bump still needs `make release` to reach consumers; it
+  dispatches a CI run for the merge commit, since the merge triggered none
 
 ## Versioning
 
