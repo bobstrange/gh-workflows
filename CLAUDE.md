@@ -23,7 +23,7 @@ gh search code --owner bobstrange "bobstrange/gh-workflows" \
 
 ## Consumer contract (do not break within v1)
 
-- Workflow path `.github/workflows/lint.yml`, callable with **zero required inputs**. New
+- Workflow paths `.github/workflows/lint.yml` and `dependabot-auto-merge.yml`, callable with **zero required inputs**. New
   inputs stay optional and default to the current behavior, so the zero-input call never
   changes meaning
 - Job name `lint` (consumers' required-status-check rulesets reference it as
