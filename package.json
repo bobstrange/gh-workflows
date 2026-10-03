@@ -4,7 +4,7 @@
   "description": "Dev tooling pins; also exercises the reusable workflow's npm path (setup-node, npm ci, repo-local bins) in this repo's own CI.",
   "devDependencies": {
     "@secretlint/secretlint-rule-preset-recommend": "13.0.4",
-    "markdownlint-cli2": "0.23.2",
+    "markdownlint-cli2": "0.23.3",
     "prettier": "3.9.6",
     "secretlint": "13.0.4"
   }
