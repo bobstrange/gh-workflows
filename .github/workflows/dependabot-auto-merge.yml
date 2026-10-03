@@ -1,0 +1,51 @@
+---
+name: Reusable Dependabot auto-merge
+
+on:
+  workflow_call:
+
+jobs:
+  auto-merge:
+    name: auto-merge
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    # A called workflow can only keep or reduce the caller's token scopes, so
+    # the caller has to grant these too (Dependabot runs start read-only).
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - id: metadata
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+        with:
+          github-token: ${{ github.token }}
+      # With no required check on the base branch `gh pr merge --auto` merges
+      # on the spot, before CI has run. Only rulesets are readable with this
+      # token (legacy branch protection needs Administration: read).
+      - id: guard
+        name: Require status checks on the base branch
+        run: |
+          count=$(gh api "repos/$REPO/rules/branches/$BASE" \
+            --jq '[.[] | select(.type == "required_status_checks") | .parameters.required_status_checks[]] | length')
+          if [ "$count" -gt 0 ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::$BASE has no required status checks in a ruleset; not queuing auto-merge"
+          fi
+        env:
+          REPO: ${{ github.repository }}
+          BASE: ${{ github.event.pull_request.base.ref }}
+          GH_TOKEN: ${{ github.token }}
+      # An allowlist rather than "not major": an empty or unknown update-type
+      # stays manual. Majors stay manual because green CI does not prove
+      # unchanged behaviour.
+      - name: Queue auto-merge for minor and patch updates
+        if: >-
+          steps.guard.outputs.ok == 'true' &&
+          (steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
+          steps.metadata.outputs.update-type == 'version-update:semver-patch')
+        run: gh pr merge --auto --merge "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ github.token }}

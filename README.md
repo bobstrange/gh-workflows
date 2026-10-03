@@ -151,6 +151,37 @@ Repos with jobs of their own add each one's name to `required_status_checks` alo
 express the same thing, but keeping one mechanism means one place to look when a merge
 is unexpectedly allowed or blocked.
 
+### Dependabot auto-merge
+
+`.github/workflows/dependabot-auto-merge.yml`:
+
+```yaml
+---
+name: Dependabot auto-merge
+
+on: pull_request
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    uses: bobstrange/gh-workflows/.github/workflows/dependabot-auto-merge.yml@v1
+```
+
+Queues `gh pr merge --auto --merge` on Dependabot's minor and patch PRs, security
+updates included (cooldown does not delay those); majors stay manual. It also needs:
+
+- **Every check in the ruleset above.** With no required check `--auto` merges on the
+  spot; the workflow refuses then, but only rulesets are visible to it, not legacy
+  branch protection. Do not add `auto-merge` itself as a required check
+- `allow_auto_merge` on: `gh api -X PATCH repos/OWNER/REPO -F allow_auto_merge=true`
+- **Nothing that must run on `push` to main.** A merge made with `GITHUB_TOKEN`
+  triggers no further workflow, so post-merge E2E or deploys are skipped. Such a repo
+  stays manual
+- Here, a merged pin bump still needs `make release` to reach consumers
+
 ## Versioning
 
 `v1` is a moving major tag (like action tags): backward-compatible changes move it
